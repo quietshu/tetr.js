@@ -58,6 +58,12 @@ h1 {
   font-size: 2rem;
   margin: 0.65em 0;
 }
+h1 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0.65em 0;
+}
+
 h3 {
   margin: 0;
   text-transform: uppercase;
@@ -198,7 +204,7 @@ nav a {
   vertical-align: top;
 }
 #stats td {
-  font-size: 280%;
+  font-size: 220%;
   font-weight: 900;
   text-align: center;
   line-height: 1;

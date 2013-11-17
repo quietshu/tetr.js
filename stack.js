@@ -82,8 +82,33 @@ Stack.prototype.addPiece = function(tetro) {
   if (gametype !== 3)
     statsLines.innerHTML = lineLimit - lines;
   else
-    statsLines.innerHTML = digLines.length;
+    statsLines.innerHTML = lines; // digLines.length; /* farter */
 
+  this.draw();
+}
+/**
+ * Raise a garbage line. farter
+ */
+Stack.prototype.rowRise = function(arrRow, objPiece) {
+  for(var x = 0; x < 10; x++) {
+    for(var y = 0; y < this.grid[x].length - 1; y++) {
+      this.grid[x][y]=this.grid[x][y+1];
+    }
+    this.grid[x][this.grid[x].length-1]=arrRow[x];
+  }
+  for(var y = 0; y < digLines.length; y++) {
+    digLines[y]--;
+  }
+  digLines.push(21);
+  if (!piece.moveValid(0, 0, piece.tetro)) {
+    piece.y-=1;
+    if (piece.y < pieces[piece.index].y - 2) {
+      gameState = 9;
+      msg.innerHTML = 'OOPS!';
+      menu(3);
+    }
+  }
+  piece.dirty = true;
   this.draw();
 }
 /**

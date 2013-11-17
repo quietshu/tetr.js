@@ -2,10 +2,11 @@ function Preview() {
   grabBag = this.gen();
 }
 Preview.prototype.init = function() {
-  //XXX fix ugly code lolwut
+  //XXX fix ugly code lolwut /* farter */
   while (1) {
     this.grabBag = this.gen();
-    if ([3,4,6].indexOf(this.grabBag[0]) === -1) break;
+    break;
+    //if ([3,4,6].indexOf(this.grabBag[0]) === -1) break;
   }
   this.grabBag.push.apply(this.grabBag, this.gen());
   this.draw();

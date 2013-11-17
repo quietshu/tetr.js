@@ -196,28 +196,42 @@ var gravity;
 var gravityArr = (function() {
   var array = [];
   array.push(0);
-  for (var i = 1; i < 64; i++)
+  for (var i = 1; i < 64; i*=2)
     array.push(i / 64);
-  for (var i = 1; i <= 20; i++)
+  for (var i = 1; i <= 20; i+=19)
     array.push(i);
   return array;
 })();
 
 var settings = {
-  DAS: 10,
+  DAS: 8,
   ARR: 1,
   Gravity: 0,
-  'Soft Drop': 31,
+  'Soft Drop': 6,
   'Lock Delay': 30,
   Size: 0,
   Sound: 0,
   Volume: 100,
   Block: 0,
-  Ghost: 0,
+  Ghost: 1,
   Grid: 0,
   Outline: 0
 };
 
+var settingName = {
+  DAS: "DAS 加速延迟",
+  ARR: "ARR 重复延迟",
+  Gravity: "Gravity<br>下落速度",
+  'Soft Drop': "Soft Drop<br>软降速度",
+  'Lock Delay': "Lock Delay<br>锁定延迟",
+  Size: "Size<br>画面大小",
+  Sound: "Sound 声音",
+  Volume: "音量",
+  Block: "Block 样式",
+  Ghost: "Ghost 影子",
+  Grid: "Grid 网格",
+  Outline: "Outline<br>方块边缘"
+};
 var setting = {
   DAS: range(0,31),
   ARR: range(0,11),
@@ -225,17 +239,17 @@ var setting = {
     var array = [];
     array.push('Auto');
     array.push('0G');
-    for (var i = 1; i < 64; i++)
+    for (var i = 1; i < 64; i*=2)
       array.push(i + '/64G');
-    for (var i = 1; i <= 20; i++)
+    for (var i = 1; i <= 20; i+=19)
       array.push(i + 'G');
     return array;
   })(),
   'Soft Drop': (function() {
     var array = [];
-    for (var i = 1; i < 64; i++)
+    for (var i = 1; i < 64; i*=2)
       array.push(i + '/64G');
-    for (var i = 1; i <= 20; i++)
+    for (var i = 1; i <= 20; i+=19)
       array.push(i + 'G');
     return array;
   })(),
@@ -250,6 +264,7 @@ var setting = {
 };
 
 var frame;
+var frameLastRise;
 
 /**
 *Pausing variables
@@ -442,27 +457,14 @@ function init(gt) {
 
   if (gametype === 3) {
     // Dig Race
-    // make ten random numbers, make sure next isn't the same as last?
+    // make ten random numbers, make sure next isn't the same as last? t=rnd()*(size-1);t>=arr[i-1]?t++:; /* farter */
     //TODO make into function or own file.
 
-    digLines = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    digLines = [];
+    frameLastRise = 0;
 
-    statsLines.innerHTML = 10;
-    statsLines.innerHTML = 10;
-    var randomNums = [];
-    for (var i = 0; i < 10; i++) {
-      var random = ~~(rng.next() * 10);
-      if (random !== randomNums[i - 1])
-        randomNums.push(random);
-      else
-        i--
-    }
-    for (var y = 21; y > 11; y--) {
-      for (var x = 0; x < 10; x++) {
-        if (randomNums[y - 12] !== x)
-          stack.grid[x][y] = 8;
-      }
-    }
+    statsLines.innerHTML = "0";
+    
     stack.draw();
   }
 
@@ -831,6 +833,105 @@ function update() {
 
   piece.update();
 
+  if(gametype === 3) {
+    var fromLastRise = frame-frameLastRise;
+    var arrRow = [8,8,8,8,8,8,8,8,8,8];
+    var arrRowGen = {
+      'simple':
+      function(arr,offset,range,width) {
+        var holex = ~~(rng.next()*range)+offset;
+        for(var x = 0; x < width; x++){
+          arr[holex + x] = 0;
+        }
+      },
+      'simplemessy':
+      function(arr,ratio) {
+        var hashole = false;
+        for(var x = 0; x < 10; x++){
+          if(rng.next()>=ratio) {
+            hashole=true;
+            arr[x] = 0;
+          }
+        }
+        if(hashole===false){
+          arr[~~(rng.next()*10)] = 0;
+        }
+      },
+    };
+    var arrStages=[
+      {begin:   0, delay: 60*2, gen:function(arr){arrRowGen.simple(arr,3,1,4)}},
+      {begin:  10, delay: 60*5, gen:function(arr){arrRowGen.simple(arr,2,3,4)}},
+      {begin:  20, delay: 60*7, gen:function(arr){arrRowGen.simple(arr,0,7,4)}},
+      {begin:  40, delay: 60*5, gen:function(arr){arrRowGen.simple(arr,2,3,4)}},
+      {begin:  50, delay: 60*2, gen:function(arr){arrRowGen.simple(arr,4,1,2)}},
+      {begin:  70, delay: 60*5, gen:function(arr){arrRowGen.simple(arr,0,9,2)}},
+      {begin:  80, delay: 60*4, gen:function(arr){arrRowGen.simple(arr,0,9,2)}},
+      {begin:  90, delay: 60*3, gen:function(arr){arrRowGen.simple(arr,0,9,2)}},
+      
+      {begin: 100, delay: 60*4, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      {begin: 110, delay: 60*3, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      
+      {begin: 150, delay: 60*4, gen:function(arr){arrRowGen.simple(arr,0,7,4)}},
+      {begin: 170, delay: 60*3, gen:function(arr){arrRowGen.simple(arr,0,7,4)}},
+      
+      {begin: 200, delay: 60*3, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      {begin: 220, delay: 60*2.5, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      {begin: 250, delay: 60*2, gen:function(arr){arrRowGen.simple(arr,0,9,2)}},
+      
+      {begin: 300, delay: 60*3.5, gen:function(arr){arrRowGen.simplemessy(arr,0.9)}},
+      {begin: 320, delay: 60*2.5, gen:function(arr){arrRowGen.simplemessy(arr,0.9)}},
+      {begin: 350, delay: 60*3.5, gen:function(arr){arrRowGen.simplemessy(arr,0.8)}},
+      {begin: 390, delay: 60*2.5, gen:function(arr){arrRowGen.simplemessy(arr,0.8)}},
+      {begin: 400, delay: 60*4, gen:function(arr){arrRowGen.simplemessy(arr,0.6)}},
+      {begin: 430, delay: 60*4, gen:function(arr){arrRowGen.simplemessy(arr,0.4)}},
+      {begin: 450, delay: 60*4, gen:function(arr){arrRowGen.simplemessy(arr,0.1)}},
+      
+      {begin: 470, delay: 60*4, gen:function(arr){arrRowGen.simplemessy(arr,0.4)}},
+      {begin: 500, delay: 60*3, gen:function(arr){arrRowGen.simplemessy(arr,0.8)}},
+      {begin: 550, delay: 60*2.5, gen:function(arr){arrRowGen.simplemessy(arr,0.8)}},
+      {begin: 600, delay: 60*3.5, gen:function(arr){arrRowGen.simplemessy(arr,0.6)}},
+      {begin: 650, delay: 60*3, gen:function(arr){arrRowGen.simplemessy(arr,0.6)}},
+      {begin: 700, delay: 60*4, gen:function(arr){arrRowGen.simplemessy(arr,0.4)}},
+      {begin: 750, delay: 60*3.5, gen:function(arr){arrRowGen.simplemessy(arr,0.4)}},
+      {begin: 780, delay: 60*3, gen:function(arr){arrRowGen.simplemessy(arr,0.4)}},
+      {begin: 800, delay: 60*2, gen:function(arr){arrRowGen.simplemessy(arr,0.9)}},
+      {begin: 900, delay: 60*1.7, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      
+      {begin: 950, delay: 60*1.5, gen:function(arr){arrRowGen.simple(arr,0,10,1)}},
+      {begin:1000, delay: 60*5, gen:function(arr){arrRowGen.simplemessy(arr,0.0)}},
+      
+    ];
+    {
+      var curStage = 0, objCurStage;
+      while(curStage<arrStages.length && arrStages[curStage].begin <= lines) {
+        curStage++;
+      }
+      curStage--;
+      objCurStage = arrStages[curStage];
+      if(fromLastRise >= objCurStage.delay) {
+        //IJLOSTZ
+        var arrRainbow=[2,-1,1,5,4,3,7,6,-1,-1,8],idxRainbow,flagAll,colorUsed;
+        idxRainbow = ~~(objCurStage.begin/100);
+        flagAll = (~~(objCurStage.begin/50))%2;
+        if(idxRainbow >= arrRainbow.length) {
+          idxRainbow = arrRainbow.length - 1;
+        }
+        colorUsed = arrRainbow[idxRainbow];
+        for(var x=0; x<10; x+=(flagAll===1?1:9)) {
+          if(colorUsed===-1) {
+            arrRow[x]=~~(rng.next()*8+1);
+          } else {
+            arrRow[x]=colorUsed;
+          }
+        }
+        
+        objCurStage.gen(arrRow);
+        stack.rowRise(arrRow, piece);
+        frameLastRise=frame;
+      }
+    }
+  }
+	
   // Win
   // TODO
   if (gametype !== 3) {
@@ -839,13 +940,14 @@ function update() {
       msg.innerHTML = 'GREAT!';
       menu(3);
     }
-  } else {
+  } /* else {
     if (digLines.length === 0) {
       gameState = 1;
       msg.innerHTML = 'GREAT!';
       menu(3);
     }
-  }
+  } */
+  /* farter */
 
   statistics();
 

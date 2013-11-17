@@ -163,7 +163,7 @@ for (var s in settings) {
   var iRight = document.createElement('i');
 
   div.id = s;
-  b.innerHTML = s + ':';
+  b.innerHTML = settingName[s];
   span.innerHTML = setting[s][settings[s]];
   iLeft.className = 'left';
   iRight.className = 'right';
